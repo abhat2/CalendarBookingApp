@@ -17,6 +17,7 @@ namespace CalendarBookingApp.Services
             _dbContext = dbContext;
         }
 
+        // Insert appointment into database
         public void AddAppointment(Appointment appointment)
         {
             _dbContext.Appointments.Add(appointment);
@@ -24,6 +25,7 @@ namespace CalendarBookingApp.Services
             Console.WriteLine($"Appointment starting at {appointment.AppointmentStartTime} has been booked.");
         }
 
+        // Delete appointment from database based on start time
         public void DeleteAppointment(DateTime startTime)
         {
             Appointment? appointment = _dbContext.Appointments.Where(a => a.AppointmentStartTime == startTime).FirstOrDefault();
@@ -40,6 +42,7 @@ namespace CalendarBookingApp.Services
             }
         }
 
+        // Get appointment from database based on start time
         public void FindAppointment(DateTime startTime)
         {
             Appointment? appointment = _dbContext.Appointments.Where(a => a.AppointmentStartTime == startTime).FirstOrDefault();
