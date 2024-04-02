@@ -64,7 +64,7 @@ namespace CalendarBookingApp.Helper
         public static DateTime GetRandomDateTime(string input)
         {
             // Get hours and minutes from input
-            DateTime inputTime = DateTime.ParseExact(input, "hh:mm", CultureInfo.InvariantCulture);
+            DateTime inputTime = DateTime.ParseExact(input, "HH:mm", CultureInfo.InvariantCulture);
 
             DateTime today = DateTime.Today;
 
@@ -83,13 +83,19 @@ namespace CalendarBookingApp.Helper
         public static int GetWeekNumberOfMonth(DateTime date)
         {
             date = date.Date;
+            
+            // Get the first day of month
             DateTime firstMonthDay = new DateTime(date.Year, date.Month, 1);
+            
+            // Get the first Monday of month
             DateTime firstMonthMonday = firstMonthDay.AddDays((DayOfWeek.Monday + 7 - firstMonthDay.DayOfWeek) % 7);
+
             if (firstMonthMonday > date)
             {
                 firstMonthDay = firstMonthDay.AddMonths(-1);
                 firstMonthMonday = firstMonthDay.AddDays((DayOfWeek.Monday + 7 - firstMonthDay.DayOfWeek) % 7);
             }
+
             return (date - firstMonthMonday).Days / 7 + 1;
         }
     }
