@@ -1,4 +1,4 @@
-﻿using CalendarBookingApp.Database;
+﻿using CalendarBookingApp.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +9,8 @@ namespace CalendarBookingApp.Services
 {
     public interface IAppointmentService
     {
-        Task AddAppointment(Appointment appointment);
+        void AddAppointment(Appointment appointment);
+        void DeleteAppointment(DateTime startTime);
+        void FindAppointment(DateTime startTime);
     }
 }

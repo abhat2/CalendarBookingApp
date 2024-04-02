@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CalendarBookingApp.Database
+namespace CalendarBookingApp.Data
 {
     public class Appointment
     {

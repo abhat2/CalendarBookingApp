@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CalendarBookingApp.Database
+namespace CalendarBookingApp.Data
 {
     public class AppDbContext : DbContext
     {
@@ -19,11 +19,19 @@ namespace CalendarBookingApp.Database
         public AppDbContext()
         {
         }
+    }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public static class AppDbContextFactory
+    {
+        public static AppDbContext Create(string connectionString)
         {
-            optionsBuilder.UseSqlServer("Server=(localdb)\\MSSQLLocalDB;Initial Catalog=CalendarBooking;Integrated Security=True");
-        }
+            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
+            optionsBuilder.UseSqlServer(connectionString);
 
+            var context = new AppDbContext(optionsBuilder.Options);
+            context.Database.EnsureCreated();
+
+            return context;
+        }
     }
 }

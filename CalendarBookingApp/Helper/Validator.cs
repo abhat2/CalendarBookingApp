@@ -1,5 +1,5 @@
-﻿using CalendarBookingApp.Database;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,127 +12,10 @@ namespace CalendarBookingApp.Helper
 {
     public class Validator
     {
-        public static void ValidateUserInput(string input)
-        {
-            if (input.Contains(Constants.AddAppointment) || input.Contains(Constants.DeleteAppointment) || input.Contains(Constants.FindAppointment) || input.Contains(Constants.KeepAppointment))
-            {
-                // Add appointment
-                if (input.Contains(Constants.AddAppointment))
-                {
-                    string timeString = input.Split($"{Constants.AddAppointment} ")[1];
-
-                    DateTime startTime = GetDateTime(timeString);
-                    bool validStartTime = CheckValidDateTime(startTime);
-
-                    if (validStartTime)
-                    {
-                        DateTime endTime = startTime.AddMinutes(Constants.AppointmentDuration);
-
-                        using (var context = new AppDbContext())
-                        {
-                            // creates db if not exists 
-                            context.Database.EnsureCreated();
-
-                            var appointment = new Appointment() { AppointmentStartTime = startTime, AppointmentEndTime = endTime };
-                            context.Appointments.Add(appointment);
-
-                            context.SaveChanges();
-
-                            Console.WriteLine($"Appointment starting at {startTime} has been booked.");
-                        }
-                    }
-                }
-
-                // Delete appointment
-                if (input.Contains(Constants.DeleteAppointment))
-                {
-                    string timeString = input.Split($"{Constants.DeleteAppointment} ")[1];
-
-                    DateTime startTime = GetDateTime(timeString);
-
-                    using (var context = new AppDbContext())
-                    {
-                        // creates db if not exists 
-                        context.Database.EnsureCreated();
-
-                        var appointment = context.Appointments.Where(a => a.AppointmentStartTime == startTime).FirstOrDefault();
-                        if (appointment == null)
-                        {
-                            Console.WriteLine("No appointment was found.");
-                        }
-                        else
-                        {
-                            context.Remove(appointment);
-                            context.SaveChanges();
-
-                            Console.WriteLine($"Appointment starting at {startTime} has been removed.");
-                        }
-                    }
-                }
-
-                // Find appointment
-                if (input.Contains(Constants.FindAppointment))
-                {
-                    string timeString = input.Split($"{Constants.FindAppointment} ")[1];
-
-                    DateTime startTime = GetDateTime(timeString);
-
-                    using (var context = new AppDbContext())
-                    {
-                        // creates db if not exists 
-                        context.Database.EnsureCreated();
-
-                        var appointment = context.Appointments.Where(a => a.AppointmentStartTime == startTime).FirstOrDefault();
-                        if (appointment == null)
-                        {
-                            Console.WriteLine("No appointment was found.");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Found appointment starting at {startTime}.");
-                        }
-                    }
-                }
-
-                // Keep appointment
-                if (input.Contains(Constants.KeepAppointment))
-                {
-                    string timeString = input.Split($"{Constants.KeepAppointment} ")[1];
-
-                    DateTime startTime = GetRandomDateTime(timeString);
-
-                    bool validStartTime = CheckValidDateTime(startTime);
-
-                    if (validStartTime)
-                    {
-                        DateTime endTime = startTime.AddMinutes(Constants.AppointmentDuration);
-
-                        using (var context = new AppDbContext())
-                        {
-                            // creates db if not exists 
-                            context.Database.EnsureCreated();
-
-                            var appointment = new Appointment() { AppointmentStartTime = startTime, AppointmentEndTime = endTime };
-                            context.Appointments.Add(appointment);
-
-                            context.SaveChanges();
-
-                            Console.WriteLine($"Appointment starting at {startTime} has been booked.");
-                        }
-                    }
-
-                }
-            }
-            else
-            {
-                Console.WriteLine("Invalid input provided. Input must contain the keyword ADD, DELETE, FIND or KEEP.");
-            }
-        }
-
         public static DateTime GetDateTime(string input)
         {
             DateTime result = new DateTime();
-            result = DateTime.ParseExact(input, "dd/MM hh:mm", CultureInfo.InvariantCulture);
+            result = DateTime.ParseExact(input, "dd/MM HH:mm", CultureInfo.InvariantCulture);
 
             return result;
         }
@@ -144,7 +27,7 @@ namespace CalendarBookingApp.Helper
 
             TimeSpan current = startTime.TimeOfDay;
             
-            // Check if time is between 9am and 5pm
+            // Check if time is not between 9am and 5pm
             if ((current < start) || (current > end))
             {
                 Console.WriteLine($"Time entered is not between 9am and 5pm.");
@@ -152,6 +35,28 @@ namespace CalendarBookingApp.Helper
             }
             else
             {
+                // Check if it is 2nd day of 3rd week
+                int weekNumber = GetWeekNumberOfMonth(startTime);
+                int dayNumber = ((int)startTime.DayOfWeek == 0) ? 7 : (int)startTime.DayOfWeek;
+
+                if (weekNumber == 3) {
+                   if (dayNumber == 2)
+                    {
+                        TimeSpan start4pm = new TimeSpan(16, 0, 0);
+                        TimeSpan end5pm = new TimeSpan(17, 0, 0);
+
+                        if ((current >= start4pm) && (current <= end5pm))
+                        {
+                            Console.WriteLine("Please enter another date and time, the one you have entered has been reserved.");
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    } 
+                }
+
                 return true;
             }
         }
@@ -173,6 +78,19 @@ namespace CalendarBookingApp.Helper
             randomDate = randomDate.AddMinutes(inputTime.Minute);
 
             return randomDate;
+        }
+
+        public static int GetWeekNumberOfMonth(DateTime date)
+        {
+            date = date.Date;
+            DateTime firstMonthDay = new DateTime(date.Year, date.Month, 1);
+            DateTime firstMonthMonday = firstMonthDay.AddDays((DayOfWeek.Monday + 7 - firstMonthDay.DayOfWeek) % 7);
+            if (firstMonthMonday > date)
+            {
+                firstMonthDay = firstMonthDay.AddMonths(-1);
+                firstMonthMonday = firstMonthDay.AddDays((DayOfWeek.Monday + 7 - firstMonthDay.DayOfWeek) % 7);
+            }
+            return (date - firstMonthMonday).Days / 7 + 1;
         }
     }
 }
